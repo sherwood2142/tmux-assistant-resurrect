@@ -732,6 +732,7 @@ get_codex_session() {
 	local child_pid="$1"
 	local args="$2"
 	local cwd="${3:-}"
+	local pane="${4:-}"
 
 	local codex_root
 	codex_root=$(codex_home "$child_pid")
@@ -776,8 +777,11 @@ get_codex_session() {
 	if [ -n "$cwd" ] && command -v python3 >/dev/null 2>&1; then
 		local process_start
 		process_start=$(get_process_start_epoch "$child_pid")
+		local title=""
+		[ -n "$pane" ] && title=$(tmux display-message -p -t "$pane" '#{pane_title}' 2>/dev/null || true)
 		sid=$(
-			USED_CODEX_SESSION_IDS="$USED_CODEX_SESSION_IDS" python3 "$PY_DIR/codex_state_db.py" "$codex_root" "$cwd" "$process_start" 2>/dev/null || true
+			USED_CODEX_SESSION_IDS="$USED_CODEX_SESSION_IDS" CODEX_PANE_TITLE="$title" \
+				python3 "$PY_DIR/codex_state_db.py" "$codex_root" "$cwd" "$process_start" 2>/dev/null || true
 		)
 		if [ -n "$sid" ]; then
 			echo "$sid"
@@ -2732,7 +2736,7 @@ resolve_pane_candidates() {
 				session_id="$cached_sid"
 				[ -z "$session_id" ] && session_id=$(get_opencode_session "$cand_pid" "$cand_args" "$pane_cwd" "$allow_deferred_fallback" || true)
 				;;
-			codex) session_id=$(get_codex_session "$cand_pid" "$cand_args" "$pane_cwd" || true) ;;
+			codex) session_id=$(get_codex_session "$cand_pid" "$cand_args" "$pane_cwd" "$pane_target" || true) ;;
 			pi) session_id=$(get_pi_session "$cand_pid" "$cand_args" "$pane_cwd" || true) ;;
 			omp) session_id=$(get_omp_session "$cand_pid" "$cand_args" "$pane_cwd" "$pane_tty" || true) ;;
 			agy) session_id=$(get_agy_session "$cand_pid" "$cand_args" "$pane_cwd" || true) ;;
@@ -3341,7 +3345,7 @@ emit_session() {
 		session_id=$(get_copilot_session "$cpid" "$cargs" 1 "$copilot_state_dir" || true)
 		;;
 	opencode) session_id=$(get_opencode_session "$cpid" "$cargs" "$cwd" "$allow_opencode_db" || true) ;;
-	codex) session_id=$(get_codex_session "$cpid" "$cargs" "$cwd" || true) ;;
+	codex) session_id=$(get_codex_session "$cpid" "$cargs" "$cwd" "$target" || true) ;;
 	pi) session_id=$(get_pi_session "$cpid" "$cargs" "$cwd" || true) ;;
 	omp) session_id=$(get_omp_session "$cpid" "$cargs" "$cwd" "" || true) ;;
 	agy) session_id=$(get_agy_session "$cpid" "$cargs" "$cwd" || true) ;;

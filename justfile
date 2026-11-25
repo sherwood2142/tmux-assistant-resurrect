@@ -726,6 +726,10 @@ test-agy-e2e:
 test-agy-authenticated resurrect_dir session_id history_text:
     python3 {{quote(repo_dir + "/test/agy-live-lifecycle.py")}} {{quote(resurrect_dir)}} {{quote(session_id)}} {{quote(history_text)}}
 
+# Run hermetic Codex thread-lookup unit tests (no Docker / no codex binary needed)
+test-codex-threads:
+    @"${TEST_BASH:-bash}" "{{repo_dir}}/test/codex-thread-unit-tests.sh"
+
 # Run hermetic Grok unit tests (no Docker / no grok binary needed)
 test-grok:
     @"${TEST_BASH:-bash}" "{{repo_dir}}/test/grok-unit-tests.sh"
